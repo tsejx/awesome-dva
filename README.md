@@ -1,5 +1,11 @@
 ﻿# dva
 
+tags: dva
+
+---
+
+[TOC]
+
 ## 1.dva简介
 
 ### dva 是什么
@@ -37,8 +43,9 @@ dva 是阿里前端架构师 sorrycc 带 team 研发的一套轻量级前端框�
 
 React项目的推荐目录结构（如果使用dva脚手架创建，则自动生成如下）
 
+    react-demo
     |── /mock/             # 数据mock的接口文件  
-    |── /src/              # 项目源码目录（我们开发的主要工作区域）  
+    |── /src/              # 项目源码目录（我们开发的主要工作区域）
     |   |── /assets        # 静态文件
     |   |── /components/   # 项目组件（用于路由组件内引用的可复用组件）   
     |   |── /routes/       # 路由组件（页面维度） 
@@ -61,19 +68,23 @@ React项目的推荐目录结构（如果使用dva脚手架创建，则自动生
 
 ### 2.1-index.js文件介绍
 
+* 创建dva实例的五部曲
+
 ```javascript
 // 引入dva库
 import dva from 'dva';
-
 // 引入dva的路由库
 import { useRouterHistory, browserHistory, hashHistory } from 'dva/router';
 
+// 1.Initialize
 // 初始化，创建dva实例
 const app = dva({history: browserHistory});
 
+// 2.Plugins
 // 使用插件
 app.use(Hooks)
 
+// 3.Model
 // 在index.js中注册models文件夹下的所有用到的model
 // 之前提到过，redux的一大原则就是唯一数据源，即单个应用内只有一个store，状态是一个树形对象
 // 功能不同的业务实体分别挂在到这一唯一store下，是二级元素
@@ -82,10 +93,12 @@ app.model(require('./models/model1'));
 app.model(require('./models/model2'));
 app.model(require('./models/model3'));
 
+// 4.Router
 // 注册路由文件
 app.router(require('./router'));
 
-// 将dva实例绑定到DOM树中的#root元素，意为所有的react-Dom都加载于root节点下
+// 5.Start
+// 将dva实例绑定到DOM树中的#root元素，意为所有的react-dom都加载于root节点下
 app.start('#root');
 ```
 
@@ -119,6 +132,140 @@ export default function({ history }) {
 };
 ```
 
+### 2.3-dva五部曲详解
+
+#### 2.3.1-const app = dva()
+
+这部分是用来做dva初始化的部分，完整的接口如下
+
+```javascript
+const app = dva({
+    history,
+    initialState,
+    onError,
+    onAction,
+    onStateChange,
+    onReducer,
+    onEffect,
+    onHmr,
+    extraReducers,
+    extraEnhancers,
+})
+```
+
+* 在这里，你可以设置全局state，全部error，还有包括router的事件，state的事件等等。
+* 都可以直接统一的在这边进行设置与管理
+* 还有history这个参数是从react-router中来的
+
+常用的history有三种形式，但是你也可以使用 React Router实现自定义的history。
+
+* browserHistory
+* hashHistory
+* createMemoryHistory
+
+**相关链接**
+
+ - [react-router][2]
+ - [dva初始化][3]
+
+#### 2.3.2-app.use
+
+`app.use(hooks)`
+
+配置hooks或者注册插件。(插件最终返回的是hooks)
+
+比如注册dva-loading插件的例子：
+
+```javascript
+import createLoading from 'dva-loading'
+...
+app.use(createLoading(opts));
+```
+
+#### 2.3.3-app.model
+
+这个是用来接收你发送的action的
+
+```javascript
+app.model({
+  namespace: 'todo',
+  state: [],
+  reducer: {
+    add(state,{ payload: todo }) {
+      // 保存数据到 state
+      return [...state,todo];
+    },
+  },
+  effects: {
+    *save({ payload: todo},{ put, call }){
+      // 调用saveTodoToServer,成功后触发`add` action保存到 state
+      yield call(saveTodoToServer, todo);
+      yield put({type: 'add', payload: todo });
+    },
+  },
+  subscription: {
+    setup({ history, dispatch }){
+      // 监听 history 变化，当进入 `/` 时触发 `load` action
+      return history.listen(({ pathname}) => {
+        if( pathname === '/'){
+          dispatch({type: 'load'});
+        }
+      });
+    },
+  },
+})
+```
+
+#### 2.3.4-app.router
+
+在这里面，进行你所有页面的初始化路由设置
+
+写法1:
+
+```javascript
+<Router>
+  <Route path='/' component={App}>
+    <Route path='about' component={About} />
+    <Route path='inbox' component={Inbox}>
+      <Route path='message/:id' component={Message} />
+    </Route>
+  </Route>
+</Router>
+```
+
+写法2:
+```javascript
+const CourseRoute = {
+  path: 'course/:courseId',
+  
+  getChildRoutes(location, callback){
+    require.ensure([], function (require){
+      callback(null, [
+        require('./routes/Announcements'),
+        require('./routes/Assignments'),
+        require('./routes/Grades'),
+      ])
+    })
+  },
+  
+  getIndexRoute(location, callback) {
+    require.ensure([], function (require) {
+      callback(null, require('./components/Index'))
+    })
+  },
+  
+  getComponents(location, callback){
+    require.ensure([], function(require){
+      callback(null, require('./components/Course'))
+    })
+  }
+}
+```
+
+下面这种是按需加载的，所有性能会比上面的那种，要高得多，尤其是你的页面比较重的时候。 
+
+#### 2.3.5-app.start()
+ 
 ## 3.dva框架下的react项目的组件设计
 
 ### 3.1-抽离Model
@@ -187,6 +334,8 @@ const MyComponent = (props)=>{};
 // propTypes属性，用于限制props的传入数据类型 // 检验数据类型
 MyComponent.propTypes = {};
 
+//===============================================================================================
+// 写法一
 // 声明模型传递函数，用于建立组件和数据的映射关系
 // 实际表示 将ModelA这一个数据模型，绑定到当前的组件中，则在当前组件中，随时可以取到ModelA的最新值
 // 可以绑定多个Model
@@ -197,6 +346,11 @@ function mapStateToProps({ModelA}) {
 // 关联 model
 // 正式调用模型传递函数，完成模型绑定
 export default connect(mapStateToProps)(MyComponent);
+
+// ==============================================================================================
+// 写法二
+export default connect( ModelA => ModelA )(MyComponent);
+
 ```
 
 * 展示组件：展示通过 props 传递到组件内部数据；传入的数据来源于容器组件向展示组件的props
@@ -608,7 +762,7 @@ import {query} from '../services/users';
 
 数据的改变发生通常是通过用户交互行为或者浏览器行为（如路由跳转等）触发的，当此类行为会改变数据的时候可以通过 `dispatch` 发起一个 `action`，如果是同步行为会直接通过 `Reducers` 改变 `State` ，如果是异步行为（副作用）会先触发 `Effects` 然后流向 `Reducers` 最终改变 `State`，所以在 dva 中，数据流向非常清晰简明，并且思路基本跟开源社区保持一致（也是来自于开源社区）。
 
-![dva中的数据流向][2]
+![dva中的数据流向][4]
 
 ### 4.1-Model
 
@@ -759,17 +913,19 @@ app.router(({history}) =>
 
 
 参考资料：
-1. [react初次实践总结][3]
-2. [dva搭建简易react项目实践总结][4]
-3. [dva中文文档][5]
-4. [dva英文文档][6]
-5. [使用dva时需要使用到的ES6技术][7]
+1. [react初次实践总结][5]
+2. [dva搭建简易react项目实践总结][6]
+3. [dva中文文档][7]
+4. [dva英文文档][8]
+5. [使用dva时需要使用到的ES6技术][9]
 
 
   [1]: https://github.com/dvajs/dva-docs/tree/master/v1/zh-cn/tutorial
-  [2]: https://camo.githubusercontent.com/c826ff066ed438e2689154e81ff5961ab0b9befe/68747470733a2f2f7a6f732e616c697061796f626a656374732e636f6d2f726d73706f7274616c2f505072657245414b62496f445a59722e706e67
-  [3]: http://www.jianshu.com/p/3f020ec08714
-  [4]: http://www.jianshu.com/p/092d107b8d72
-  [5]: https://github.com/dvajs/dva/blob/master/README_zh-CN.md
-  [6]: http://redux.js.org/docs/Glossary.html
-  [7]: https://github.com/dvajs/dva-knowledgemap
+  [2]: https://react-guide.github.io/react-router-cn/docs/guides/basics/Histories.html
+  [3]: https://github.com/dvajs/dva/blob/master/docs/API_zh-CN.md
+  [4]: https://camo.githubusercontent.com/c826ff066ed438e2689154e81ff5961ab0b9befe/68747470733a2f2f7a6f732e616c697061796f626a656374732e636f6d2f726d73706f7274616c2f505072657245414b62496f445a59722e706e67
+  [5]: http://www.jianshu.com/p/3f020ec08714
+  [6]: http://www.jianshu.com/p/092d107b8d72
+  [7]: https://github.com/dvajs/dva/blob/master/README_zh-CN.md
+  [8]: http://redux.js.org/docs/Glossary.html
+  [9]: https://github.com/dvajs/dva-knowledgemap
