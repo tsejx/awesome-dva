@@ -5,7 +5,6 @@ A collection of awesome things regarding dva ecosystem.
 #### 工具插件
 
 * [dva](https://github.com/dvajs/dva)
-
 * [dva-cli](https://github.com/dvajs/dva-cli) - 命令行工具，基于 [roadhog](https://github.com/sorrycc/roadhog) 构建，查看 [roadhog 配置项](https://github.com/sorrycc/roadhog/blob/master/README.md#configuration)
 * [dva-loading](https://github.com/dvajs/dva/tree/master/packages/dva-loading) - 可以自动处理 loading 状态，不用一遍遍地写 showLoading 和 hideLoading
 * [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr) - 实现 components、routes 和 models 的 HMR
@@ -13,17 +12,11 @@ A collection of awesome things regarding dva ecosystem.
 #### 底层框架
 
 * [redux](https://github.com/reduxjs/redux) - 为 JavaScript 应用而生的可预测状态管理器
-
 * [react-redux](https://github.com/reduxjs/react-redux) - 官方 React 与 Redux 绑定的中间件
-
 * [redux-saga](https://github.com/redux-saga/redux-saga) - Redux 应用的替代副作用模型
-
 * [react-router](https://github.com/ReactTraining/react-router) - React 声明式路由
-
 * [react-router-dom](https://github.com/ReactTraining/react-router/tree/master/packages/react-router-dom) - DOM 与 ReactRouter 绑定的中间件
-
 * [react-router-redux](https://github.com/reactjs/react-router-redux) - 保持 ReactRouter 与 Redux 同步的绑定中间件
-
 * [isomorphic-fetch](https://github.com/matthew-andrews/isomorphic-fetch) - 用于 Node 和 浏览器的同构通信框架
 
 #### 架构思想
